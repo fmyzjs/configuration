@@ -121,6 +121,8 @@
   - "restart edxapp"
   - "restart edxapp_workers"
 
+- name: Install wheels packages
+  
 
 # Install the python pre requirements into {{ edxapp_venv_dir }}
 - name : install python pre-requirements
@@ -128,13 +130,26 @@
     requirements="{{pre_requirements_file}}"
     virtualenv="{{edxapp_venv_dir}}"
     state=present
-    extra_args="-i {{ edxapp_pypi_local_mirror }}"
+    extra_args: >
+      --use-wheel --no-index
+      --find-links=/tmp/wheelhouse
   sudo_user: "{{ edxapp_user }}"
   environment: "{{ edxapp_environment }}"
   notify:
   - "restart edxapp"
   - "restart edxapp_workers"
-  when: not inst.stat.exists or new.stat.md5 != inst.stat.md5
+
+- name : install python base-requirements
+  pip: >
+    requirements="{{base_requirements_file}}"
+    virtualenv="{{edxapp_venv_dir}}"
+    state=present
+    extra_args: >
+      --use-wheel --no-index
+      --find-links=/tmp/wheelhouse
+  notify:
+  - "restart edxapp"
+  - "restart edxapp_workers"
 
 # Install the python modules into {{ edxapp_venv_dir }}
 - name : install python base-requirements
@@ -142,14 +157,16 @@
   # requirements are pathed relative to the edx-platform repo. Using the pip from inside the virtual environment implicitly
   # installs everything into that virtual environment.
   shell: >
-    {{ edxapp_venv_dir }}/bin/pip install -i {{ edxapp_pypi_local_mirror }} --exists-action w --use-mirrors -r {{ base_requirements_file }}
+    {{ edxapp_venv_dir }}/bin/pip install
+    --use-wheel --no-index
+    --find-links=/tmp/wheelhouse
+    --exists-action w -r {{ base_requirements_file }}
     chdir={{ edxapp_code_dir }}
   environment: "{{ edxapp_environment }}"
   sudo_user: "{{ edxapp_user }}"
   notify:
   - "restart edxapp"
   - "restart edxapp_workers"
-  when: not inst.stat.exists or new.stat.md5 != inst.stat.md5
 
 # Install the python post requirements into {{ edxapp_venv_dir }}
 - name : install python post-requirements
@@ -157,7 +174,9 @@
     requirements="{{post_requirements_file}}"
     virtualenv="{{edxapp_venv_dir}}"
     state=present
-    extra_args="-i {{ edxapp_pypi_local_mirror }}"
+    extra_args: >
+      --use-wheel --no-index
+      --find-links=/tmp/wheelhouse
   sudo_user: "{{ edxapp_user }}"
   environment: "{{ edxapp_environment }}"
   notify:
@@ -179,6 +198,9 @@
   - "restart edxapp_workers"
   when: not inst.stat.exists or new.stat.md5 != inst.stat.md5
 
+#
+# TODO: Ins't this pulled in via includes above?
+#
 # Install the final python modules into {{ edxapp_venv_dir }}
 - name : install python post-post requirements
   # Need to use shell rather than pip so that we can maintain the context of our current working directory; some
