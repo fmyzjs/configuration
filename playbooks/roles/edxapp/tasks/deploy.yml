@@ -121,9 +121,36 @@
   - "restart edxapp"
   - "restart edxapp_workers"
 
-- name: Install wheels packages
-  
+- name: Create local mirror of wheels packages
+  shell: >
+    wget --recursive --no-clobber --no-directories
+    --directory-prefix /tmp/wheelhouse
+    https://s3.amazonaws.com/edx-static/wheelhouse/index.html
+  sudo_user: "{{ edxapp_user }}"
+  environment: "{{ edxapp_environment }}"
 
+- name: Upgrade pip
+  pip: >
+    name={{ item }}
+    virtualenv="{{edxapp_venv_dir}}"
+    state=latest
+  sudo_user: "{{ edxapp_user }}"
+  environment: "{{ edxapp_environment }}"
+  notify:
+  - "restart edxapp"
+  - "restart edxapp_workers"
+  with_items:
+    - pip
+    - wheel
+
+- name: Easy install distribute
+  easy_install: >
+    name=distribute version=0.6.28
+    virtualenv="{{edxapp_venv_dir}}"
+    state=present
+  sudo_user: "{{ edxapp_user }}"
+  environment: "{{ edxapp_environment }}"
+  
 # Install the python pre requirements into {{ edxapp_venv_dir }}
 - name : install python pre-requirements
   pip: >
@@ -199,7 +226,7 @@
   when: not inst.stat.exists or new.stat.md5 != inst.stat.md5
 
 #
-# TODO: Ins't this pulled in via includes above?
+# TODO: Isn't this pulled in via includes above?
 #
 # Install the final python modules into {{ edxapp_venv_dir }}
 - name : install python post-post requirements
