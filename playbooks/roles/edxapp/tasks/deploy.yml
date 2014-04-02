@@ -143,8 +143,8 @@
     - pip
     - wheel
 
-- name: Easy install distribute
-  easy_install: >
+- name: Ensure distribute version
+  pip: >
     name=distribute version=0.6.28
     virtualenv="{{edxapp_venv_dir}}"
     state=present
@@ -157,9 +157,7 @@
     requirements="{{pre_requirements_file}}"
     virtualenv="{{edxapp_venv_dir}}"
     state=present
-    extra_args: >
-      --use-wheel --no-index
-      --find-links=/tmp/wheelhouse
+    extra_args="--use-wheel --no-index --find-links=/tmp/wheelhouse"
   sudo_user: "{{ edxapp_user }}"
   environment: "{{ edxapp_environment }}"
   notify:
@@ -171,9 +169,7 @@
     requirements="{{base_requirements_file}}"
     virtualenv="{{edxapp_venv_dir}}"
     state=present
-    extra_args: >
-      --use-wheel --no-index
-      --find-links=/tmp/wheelhouse
+    extra_args="--use-wheel --no-index --find-links=/tmp/wheelhouse"
   notify:
   - "restart edxapp"
   - "restart edxapp_workers"
@@ -201,9 +197,7 @@
     requirements="{{post_requirements_file}}"
     virtualenv="{{edxapp_venv_dir}}"
     state=present
-    extra_args: >
-      --use-wheel --no-index
-      --find-links=/tmp/wheelhouse
+    extra_args="--use-wheel --no-index --find-links=/tmp/wheelhouse"
   sudo_user: "{{ edxapp_user }}"
   environment: "{{ edxapp_environment }}"
   notify:
